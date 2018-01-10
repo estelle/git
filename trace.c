@@ -146,7 +146,26 @@ static void trace_vprintf_fl(const char *file, int line, struct trace_key *key,
 	print_trace_line(key, &buf);
 }
 
+static void concatenate_env(struct strbuf *dst, const char *const *env)
+{
+	int i;
+
+	/* Copy into destination buffer. */
+	strbuf_grow(dst, 255);
+	for (i = 0; env[i]; ++i) {
+		/*
+		 * the main interesting part is setting new vars
+		 * e.g. GIT_DIR, ignore the unsetting to reduce noise.
+		 */
+		if (!strchr(env[i], '='))
+			continue;
+		strbuf_addch(dst, ' ');
+		sq_quote_buf(dst, env[i]);
+	}
+}
+
 static void trace_argv_vprintf_fl(const char *file, int line,
+				  const char *const *env,
 				  const char **argv, const char *format,
 				  va_list ap)
 {
@@ -156,6 +175,9 @@ static void trace_argv_vprintf_fl(const char *file, int line,
 		return;
 
 	strbuf_vaddf(&buf, format, ap);
+
+	if (env)
+		concatenate_env(&buf, env);
 
 	sq_quote_argv(&buf, argv, 0);
 	print_trace_line(&trace_default_key, &buf);
@@ -214,7 +236,16 @@ void trace_argv_printf(const char **argv, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	trace_argv_vprintf_fl(NULL, 0, argv, format, ap);
+	trace_argv_vprintf_fl(NULL, 0, NULL, argv, format, ap);
+	va_end(ap);
+}
+
+void trace_env_argv_printf(const char *const *env, const char **argv,
+			   const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	trace_argv_vprintf_fl(NULL, 0, env, argv, format, ap);
 	va_end(ap);
 }
 
@@ -251,12 +282,13 @@ void trace_printf_key_fl(const char *file, int line, struct trace_key *key,
 	va_end(ap);
 }
 
-void trace_argv_printf_fl(const char *file, int line, const char **argv,
+void trace_argv_printf_fl(const char *file, int line,
+			  const char *const *env, const char **argv,
 			  const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	trace_argv_vprintf_fl(file, line, argv, format, ap);
+	trace_argv_vprintf_fl(file, line, env, argv, format, ap);
 	va_end(ap);
 }
 
