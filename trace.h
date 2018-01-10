@@ -34,6 +34,10 @@ extern void trace_printf_key(struct trace_key *key, const char *format, ...);
 __attribute__((format (printf, 2, 3)))
 extern void trace_argv_printf(const char **argv, const char *format, ...);
 
+__attribute__((format (printf, 3, 4)))
+extern void trace_env_argv_printf(const char * const*env, const char **argv,
+				  const char *format, ...);
+
 extern void trace_strbuf(struct trace_key *key, const struct strbuf *data);
 
 /* Prints elapsed time (in nanoseconds) if GIT_TRACE_PERFORMANCE is enabled. */
@@ -93,7 +97,14 @@ extern void trace_performance_since(uint64_t start, const char *format, ...);
 	do {								    \
 		if (trace_pass_fl(&trace_default_key))			    \
 			trace_argv_printf_fl(TRACE_CONTEXT, __LINE__,	    \
-					    argv, __VA_ARGS__);		    \
+					     NULL, argv, __VA_ARGS__);	    \
+	} while (0)
+
+#define trace_env_argv_printf(env, argv, ...)				    \
+	do {								    \
+		if (trace_pass_fl(&trace_default_key))			    \
+			trace_argv_printf_fl(TRACE_CONTEXT, __LINE__, 	    \
+					     env, argv, __VA_ARGS__); 	    \
 	} while (0)
 
 #define trace_strbuf(key, data)						    \
@@ -121,8 +132,9 @@ extern void trace_performance_since(uint64_t start, const char *format, ...);
 __attribute__((format (printf, 4, 5)))
 extern void trace_printf_key_fl(const char *file, int line, struct trace_key *key,
 				const char *format, ...);
-__attribute__((format (printf, 4, 5)))
-extern void trace_argv_printf_fl(const char *file, int line, const char **argv,
+__attribute__((format (printf, 5, 6)))
+extern void trace_argv_printf_fl(const char *file, int line,
+				 const char *const *env, const char **argv,
 				 const char *format, ...);
 extern void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
 			    const struct strbuf *data);

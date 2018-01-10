@@ -624,7 +624,8 @@ fail_pipe:
 		cmd->err = fderr[0];
 	}
 
-	trace_argv_printf(cmd->argv, "trace: run_command:");
+	trace_env_argv_printf(cmd->env, cmd->argv, "trace: run_command:");
+
 	fflush(NULL);
 
 #ifndef GIT_WINDOWS_NATIVE
